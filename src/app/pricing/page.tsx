@@ -8,8 +8,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { PLANS } from '@/config/stripe'
+import { getServerAuthSession } from '@/lib/auth'
 import { cn } from '@/lib/utils'
-import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 import {
   ArrowRight,
   Check,
@@ -18,9 +18,9 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 
-const Page = () => {
-  const { getUser } = getKindeServerSession()
-  const user = getUser()
+const Page = async () => {
+  const session = await getServerAuthSession();
+  const user = session?.user
 
   const pricingItems = [
     {

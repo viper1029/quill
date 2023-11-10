@@ -1,7 +1,5 @@
-import { authMiddleware } from '@kinde-oss/kinde-auth-nextjs/server'
+export { default } from "next-auth/middleware";
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/auth-callback'],
-}
-
-export default authMiddleware
+  matcher: ["/dashboard/:path*", "/auth-callback"],
+};

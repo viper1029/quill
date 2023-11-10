@@ -1,8 +1,8 @@
 import ChatWrapper from '@/components/chat/ChatWrapper'
 import PdfRenderer from '@/components/PdfRenderer'
 import { db } from '@/db'
+import { getServerAuthSession } from '@/lib/auth'
 import { getUserSubscriptionPlan } from '@/lib/stripe'
-import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 import { notFound, redirect } from 'next/navigation'
 
 interface PageProps {
@@ -14,8 +14,8 @@ interface PageProps {
 const Page = async ({ params }: PageProps) => {
   const { fileid } = params
 
-  const { getUser } = getKindeServerSession()
-  const user = getUser()
+  const session = await getServerAuthSession();
+  const user = session?.user
 
   if (!user || !user.id)
     redirect(`/auth-callback?origin=dashboard/${fileid}`)

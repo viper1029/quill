@@ -1,31 +1,32 @@
-import { PLANS } from '@/config/stripe'
-import { db } from '@/db'
-import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
-import Stripe from 'stripe'
+import { PLANS } from "@/config/stripe";
+import { db } from "@/db";
+import Stripe from "stripe";
+import { getServerAuthSession } from "./auth";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', {
-  apiVersion: '2023-08-16',
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
+  apiVersion: "2023-08-16",
   typescript: true,
-})
+});
 
 export async function getUserSubscriptionPlan() {
-  const { getUser } = getKindeServerSession()
-  const user = getUser()
+  const session = await getServerAuthSession();
+  const user = session?.user;
 
-  if (!user.id) {
+  if (!user?.id) {
+    // CheckKG;
     return {
       ...PLANS[0],
       isSubscribed: false,
       isCanceled: false,
       stripeCurrentPeriodEnd: null,
-    }
+    };
   }
 
   const dbUser = await db.user.findFirst({
     where: {
       id: user.id,
     },
-  })
+  });
 
   if (!dbUser) {
     return {
@@ -33,25 +34,25 @@ export async function getUserSubscriptionPlan() {
       isSubscribed: false,
       isCanceled: false,
       stripeCurrentPeriodEnd: null,
-    }
+    };
   }
 
   const isSubscribed = Boolean(
     dbUser.stripePriceId &&
       dbUser.stripeCurrentPeriodEnd && // 86400000 = 1 day
       dbUser.stripeCurrentPeriodEnd.getTime() + 86_400_000 > Date.now()
-  )
+  );
 
   const plan = isSubscribed
     ? PLANS.find((plan) => plan.price.priceIds.test === dbUser.stripePriceId)
-    : null
+    : null;
 
-  let isCanceled = false
+  let isCanceled = false;
   if (isSubscribed && dbUser.stripeSubscriptionId) {
     const stripePlan = await stripe.subscriptions.retrieve(
       dbUser.stripeSubscriptionId
-    )
-    isCanceled = stripePlan.cancel_at_period_end
+    );
+    isCanceled = stripePlan.cancel_at_period_end;
   }
 
   return {
@@ -61,5 +62,5 @@ export async function getUserSubscriptionPlan() {
     stripeCustomerId: dbUser.stripeCustomerId,
     isSubscribed,
     isCanceled,
-  }
+  };
 }
